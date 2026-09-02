@@ -30,18 +30,25 @@ Geometric diagnostics confirm that CGC reduces spectral anisotropy and equalises
 
 ## Method
 
-CGC is trained on top of frozen embeddings:
+CGC learns a residual correction on top of frozen embeddings:
 
 \[
-\mathbf{z}' = \mathbf{z} + f(\mathbf{z})
+\mathbf{z}'_i = \mathbf{z}_i + f_\theta(\mathbf{z}_i)
 \]
 
-where \(f\) is a 3-layer MLP (LayerNorm + GELU + dropout 0.1). The final linear layer is zero-initialized so training starts near identity.
+where \(f_\theta\) is a 3-layer MLP (LayerNorm + GELU + dropout 0.1).  
+The final linear layer is zero-initialized so optimization starts close to identity mapping.
 
 ### Training objective
 
 \[
-\mathcal{L} = \mathcal{L}_{cls} + \lambda_{ETF}\mathcal{L}_{ETF} + \lambda_{con}\mathcal{L}_{con}
+\mathcal{L}_{\mathrm{total}}
+=
+\mathcal{L}_{\mathrm{cls}}
+\;+\;
+\lambda_{\mathrm{ETF}}\mathcal{L}_{\mathrm{ETF}}
+\;+\;
+\lambda_{\mathrm{con}}\mathcal{L}_{\mathrm{con}}
 \]
 
 with fixed \(\lambda_{ETF}=2.0\), \(\lambda_{con}=1.0\).
@@ -51,6 +58,38 @@ with fixed \(\lambda_{ETF}=2.0\), \(\lambda_{con}=1.0\).
 - \(\mathcal{L}_{con}\): hard-negative supervised contrastive loss
 
 Centroids are updated with EMA (\(m=0.9\)); effective-number reweighting uses \(\beta=0.999\).
+
+\[
+\mathcal{L}_{\mathrm{con}}
+=
+\frac{1}{|B|}
+\sum_{i \in B}
+\frac{-1}{|P(i)|}
+\sum_{p \in P(i)}
+\log
+\frac{\exp(\mathrm{sim}(\mathbf{z}'_i,\mathbf{z}'_p)/\tau)}
+{\sum_{a \in A(i)} \exp(\mathrm{sim}(\mathbf{z}'_i,\mathbf{z}'_a)/\tau)}
+\]
+
+where \(P(i)\) are same-class positives, \(A(i)\) are all contrastive candidates excluding \(i\), and \(\tau\) is the temperature.
+
+### Methodology diagram
+
+```mermaid
+flowchart LR
+    A[Frozen Foundation Model] --> B[Extract Embeddings z]
+    B --> C[CGC Residual Corrector fθ]
+    C --> D[Corrected Embeddings z′]
+    D --> E[Classifier Head]
+    D --> F[ETF Centroid Alignment]
+    D --> G[Hard-Negative Contrastive Learning]
+    E --> H[Class-Weighted CE Loss]
+    F --> I[ETF Loss]
+    G --> J[Contrastive Loss]
+    H --> K[Total Objective]
+    I --> K
+    J --> K
+```
 
 ---
 
@@ -121,6 +160,20 @@ Highlights:
 
 ---
 
+## Training and geometry intuition
+
+```mermaid
+flowchart TD
+    A[Imbalanced Frozen Embeddings] --> B[CGC Correction]
+    B --> C[Reduced Spectral Anisotropy]
+    B --> D[More Uniform Class Volumes]
+    C --> E[Improved Minority Separability]
+    D --> E
+    E --> F[Higher Macro-F1 / Balanced Accuracy]
+```
+
+---
+
 ## Ablation (Macro-F1)
 
 | Setting | OpenSARShip (JEPA) | OpenSARShip (SARDET) | FUSARShip (JEPA) | FUSARShip (SARDET) |
@@ -165,3 +218,18 @@ jupyter notebook code.ipynb
 ## Conclusion
 
 CGC provides a practical, lightweight, post-hoc approach to improve minority-class recognition in long-tailed SAR ship classification without updating the underlying foundation model.
+
+---
+
+## Citation
+
+If you use this work, please cite:
+
+```bibtex
+@inproceedings{cgc_eccv_workshop_2026,
+  title     = {CGC: Cluster Geometry Correction for Embedding-Ready SAR Ship Classification with Frozen Foundation Models},
+  booktitle = {Geospatial AI and Applications with Foundation Models, ECCV 2026},
+  year      = {2026},
+  note      = {Workshop paper}
+}
+```
