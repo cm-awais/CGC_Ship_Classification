@@ -133,26 +133,31 @@ Highlights:
 
 ---
 
-## Repository status and code placeholder
+## Notebook workflow (`code.ipynb`)
 
-As requested, this repository currently contains only paper information in the README.
+This project is designed to be run through a single notebook, `code.ipynb`.
 
-### Code placeholder
+### Expected notebook flow
 
-- Notebook: `code.ipynb` **(to be added)**
-- The notebook is expected to include:
-  - an installation/dependency cell
-  - data loading from a local `data/` folder
-  - embedding computation
-  - saving computed embeddings for downstream training/evaluation
+1. Install dependencies in the first cell.
+2. Load ship data from the local `data/` directory.
+3. Compute frozen foundation-model embeddings.
+4. Save computed embeddings (for example as `.npz`).
+5. Train and evaluate both baseline and CGC setups.
+
+### Recommended folder layout
 
 ```text
-TODO (to be added in code.ipynb):
-1) Install dependencies in first notebook cell
-2) Load data from ./data/
-3) Extract frozen embeddings
-4) Save embeddings to disk (e.g., .npz)
-5) Train/evaluate baseline and CGC modules
+CGC_Ship_Classification/
+├── code.ipynb
+├── data/
+└── README.md
+```
+
+### Run
+
+```bash
+jupyter notebook code.ipynb
 ```
 
 ---
