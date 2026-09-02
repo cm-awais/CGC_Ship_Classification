@@ -73,6 +73,24 @@ Centroids are updated with EMA (\(m=0.9\)); effective-number reweighting uses \(
 
 where \(P(i)\) are same-class positives, \(A(i)\) are all contrastive candidates excluding \(i\), and \(\tau\) is the temperature.
 
+### Methodology diagram
+
+```mermaid
+flowchart LR
+    A[Frozen Foundation Model] --> B[Extract Embeddings z]
+    B --> C[CGC Residual Corrector fθ]
+    C --> D[Corrected Embeddings z′]
+    D --> E[Classifier Head]
+    D --> F[ETF Centroid Alignment]
+    D --> G[Hard-Negative Contrastive Learning]
+    E --> H[Class-Weighted CE Loss]
+    F --> I[ETF Loss]
+    G --> J[Contrastive Loss]
+    H --> K[Total Objective]
+    I --> K
+    J --> K
+```
+
 ---
 
 ## Geometric diagnostics
@@ -142,15 +160,17 @@ Highlights:
 
 ---
 
-## Paper figures and diagnostics
+## Training and geometry intuition
 
-For full-resolution visuals and derivations, see the paper figures:
-
-- [CGC methodology diagram](https://github.com/user-attachments/files/31732253/cgc_methodology_v2.pdf)
-- [Hard-negative contrastive loss formulation](https://github.com/user-attachments/files/31732254/contrastive_loss.pdf)
-- [Per-class intra-similarity trends](https://github.com/user-attachments/files/31732255/fig_intra_similarity_1.pdf)
-- [Per-class performance breakdown](https://github.com/user-attachments/files/31732257/per_class_performance.pdf)
-- [Extended CGC geometry analysis](https://github.com/user-attachments/files/31732245/22_CGC_Cluster_Geometry_Correc.pdf)
+```mermaid
+flowchart TD
+    A[Imbalanced Frozen Embeddings] --> B[CGC Correction]
+    B --> C[Reduced Spectral Anisotropy]
+    B --> D[More Uniform Class Volumes]
+    C --> E[Improved Minority Separability]
+    D --> E
+    E --> F[Higher Macro-F1 / Balanced Accuracy]
+```
 
 ---
 
